@@ -4,7 +4,7 @@ body {
   margin: 0;
 
   background-size : cover;
-  background-image : url('../사진/배겨.svg');
+  background-image : url('../assets/배겨.svg');
   background-repeat : no-repeat;
 }
   
