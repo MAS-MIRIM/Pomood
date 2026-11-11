@@ -1,0 +1,83 @@
+body {
+  width: 1920px;
+  height: 1080px;
+  margin: 0;
+
+  background-size : cover;
+  background-image : url('../사진/배겨.svg');
+  background-repeat : no-repeat;
+}
+  
+.latter {
+  width: 1920px;
+  height: 1080px;
+  display: flex;
+  align-items: center;
+}
+
+.text1 {
+  margin-left: 230px;
+  margin-bottom: 100px;
+  color: #fff;
+}
+
+.text2 {
+  color: #fff;
+  margin-left: -150px;
+}
+
+.latterimg {
+  margin-left: 1000px; 
+  transform: scaleX(-1);
+  position: absolute;
+  z-index: 0;
+}
+
+.latterimg2 {
+  margin-left: 1170px; 
+  margin-top: 320px;
+  position: absolute;
+  z-index: 1;
+}
+
+.input {
+  border: none;
+  outline: none;
+  background: none;
+  color: #fff;
+}
+
+.input::placeholder {
+  color: #fff;
+  font-size: 16px;
+}
+
+hr {
+  width: 250px;
+  height: 0.4px;
+  background-color: #fff;
+  margin: 0;
+  margin-left: -170px;
+  margin-top: 40px;
+}
+
+.next {
+  background-color: #fff;
+  width: 50px;
+  height: 15px;
+  padding: 10px;
+  margin-top: 120px;
+  margin-left: -250px;
+  border-radius: 15px;
+
+  /*가운데 정렬*/
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+a {
+  text-decoration: none;
+  color: #000;
+}
+
