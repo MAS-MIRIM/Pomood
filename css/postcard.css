@@ -1,0 +1,121 @@
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+
+  background: url('image.png') no-repeat center center / cover;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: sans-serif;
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  gap: 50px;
+}
+
+.left-area {
+  color: #ffffff;
+  text-align: left;
+}
+
+.left-area p {
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.next-btn {
+  background-color: #ffffff;
+  color: #333333;
+  border: none;
+  padding: 6px 22px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.postcard {
+  width: 520px;
+  height: 330px;
+  background-color: #f6f3eb;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  padding: 28px;
+  box-sizing: border-box;
+  display: flex;
+  position: relative;
+}
+
+.postcard::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  bottom: 40px;
+  width: 1px;
+  background-color: #777777;
+}
+
+.card-left, .card-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-left {
+  padding-right: 24px;
+}
+
+.card-right {
+  padding-left: 24px;
+  align-items: flex-end;
+}
+
+.brand-title {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: #666;
+}
+
+.main-title {
+  font-size: 26px;
+  font-family: serif;
+  margin: 2px 0 16px 0;
+  color: #222;
+  font-weight: normal;
+}
+
+.to-text {
+  font-size: 15px;
+  font-family: serif;
+  margin-bottom: 6px;
+  color: #444;
+}
+
+.stamp {
+  width: 65px;
+  height: 80px;
+  background-color: #e2ded5;
+  border: 1px dashed #a5a095;
+  margin-bottom: 24px;
+}
+
+.postcard-input {
+  width: 100%;
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 13px;
+  font-family: serif;
+  color: #333333;
+
+  line-height: 28px;
+  background-image: linear-gradient(transparent 96%, #888888 96%);
+  background-size: 100% 28px;
+}
