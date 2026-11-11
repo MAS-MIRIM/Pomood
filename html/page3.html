@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomood</title>
+    <link rel="stylesheet" href="../css/page3.css" />
+</head>
+<body>
+    <div class = "box1">
+        <div class = "text1">
+            <h4>3.봉투의 색깔을 골라주세요</h4>
+        </div>
+
+        <div class = "latterimg">
+            <img id="envelope" src="../assets/편지지-봉투-아이보리.png">
+        </div>
+
+        <button class="colorButton colorButton1" id="ButtonColor1" data-img = "../assets/편지지-봉투-딥슬레이트블루.png"></button>
+        <button class="colorButton colorButton2" id="ButtonColor2" data-img = "../assets/편지지-봉투-파우더블루.png"></button>
+        <button class="colorButton colorButton3" id="ButtonColor3" data-img = "../assets/편지지-봉투-아이스블루.png"></button>
+        <button class="colorButton colorButton4" id="ButtonColor4" data-img = "../assets/편지지-봉투-아이보리.png"></button>
+        <button class="colorButton colorButton5" id="ButtonColor5" data-img = "../assets/편지지-봉투-베이지.png"></button>
+    
+    </div>
+    <div class = next>
+      <a href="second.html">next</a>
+    </div>
+</body>
+<script>
+    const envelope = document.getElementById("envelope");
+    const buttons = document.querySelectorAll(".colorButton");
+
+    buttons.forEach(function (btn) { //buttons에 있는거 하나씩 꺼내서 btn이라고 부름
+        btn.addEventListener("click", function () { //만약에 btn이 클릭이라는 행동을 감지하면
+            envelope.src = btn.dataset.img; //이미지(아까 지정한 아이디)를 그 아이디에 맞는 이미지로 바꿔라
+        });
+    });
+</script>
+</html>
