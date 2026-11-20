@@ -159,7 +159,7 @@
   #stage.next #to-name { clip-path: inset(-12px 0 -12px 0); }
 
   #p2-guide {
-    position: absolute; left: 190px; top: 489px;
+    position: absolute; left: 190px; top: 485px;
     font-size: 25px; line-height: 34px; color: #f4f4ef; letter-spacing: -.2px;
     opacity: 0; transform: translateY(12px);
     transition: opacity .8s ease 1s, transform .8s ease 1s;
@@ -174,17 +174,17 @@
     transition: opacity .5s ease, transform .5s ease;
   }
   .next-btn.show { opacity: 1; transform: none; pointer-events: auto; }
-  #p2-next { left: 190px; top: 551px; }
-  #p3-next { left: 341px; top: 547px; }
+  #p2-next { left: 190px; top: 547px; }
+  #p3-next { left: 190px; top: 547px; }
   #stage.next #p2-guide { opacity: 1; transform: none; }
 
   /* 엽서 왼쪽 줄 위에 내용 쓰기 (최대 4줄) */
   #msg {
-    position: absolute; left: 62px; top: 318px; width: 390px; height: 272px;
-    margin: 0; padding: 0; border: 0; outline: none; resize: none; overflow: hidden;
+    position: absolute; left: 62px; top: 318px; width: 907px; height: 272px;
+    margin: 0; padding: 0; border: 0; outline: none; overflow: hidden; column-count: 2; column-width: 390px; column-gap: 127px; column-fill: auto;
     background: transparent; color: #6f6d6a; caret-color: #6f6d6a;
     font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
-    font-size: 26px; font-weight: 400; line-height: 67.98px; overflow-wrap: anywhere;
+    font-size: 26px; font-weight: 400; line-height: 67.98px; white-space: break-spaces; overflow-wrap: anywhere; word-break: normal;
   }
 
   /* ===== 우표 페이지 ===== */
@@ -221,7 +221,7 @@
   #stamp.has-photo #stamp-upload { display: none; }
 
   #p3-guide {
-    position: absolute; left: 351px; top: 485px;
+    position: absolute; left: 190px; top: 485px;
     font-size: 25px; line-height: 34px; color: #f4f4ef; letter-spacing: -.2px;
     opacity: 0; transform: translateY(12px);
     transition: opacity .8s ease 1s, transform .8s ease 1s;
@@ -248,13 +248,13 @@
   #envgrp img { filter: url(#envTint); }   /* 봉투 앞·뒷면 모두: 흑백 명암 이미지에 선택한 색을 곱해서 칠함 */
 
   #p4-guide {
-    position: absolute; left: 260px; top: 485px;
+    position: absolute; left: 190px; top: 485px;
     font-size: 25px; line-height: 34px; color: #f4f4ef; letter-spacing: -.2px;
     opacity: 0; transform: translateY(12px);
     transition: opacity .8s ease 1s, transform .8s ease 1s;
   }
   #stage.env #p4-guide { opacity: 1; transform: none; }
-  #p4-next { left: 251px; top: 547px; }
+  #p4-next { left: 190px; top: 547px; }
 
   .sw {
     position: absolute; left: 1570px; top: calc(309px + var(--i) * 72.24px);
@@ -338,10 +338,12 @@
     font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
     font-size: 26px; line-height: 40px; color: #6f6d6a; white-space: nowrap;
   }
+  #stage.p5 #pc5-msg { visibility: visible; opacity: 1; }
   #pc5-msg {
-    position: absolute; left: 62px; top: 318px; width: 390px; height: 272px; overflow: hidden;
+    position: absolute; left: 62px; top: 318px; width: 907px; height: 272px; overflow: hidden;
+    column-count: 2; column-width: 390px; column-gap: 127px; column-fill: auto;
     font-family: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-    font-size: 26px; line-height: 67.98px; color: #6f6d6a; white-space: pre-wrap; overflow-wrap: anywhere;
+    font-size: 26px; line-height: 67.98px; color: #6f6d6a; white-space: break-spaces; overflow-wrap: anywhere; word-break: normal;
   }
   #pc5-stamp { position: absolute; left: 810px; top: 41.7px; width: 183.4px; height: 212.7px; }
   #pc5-stamp img { position: absolute; display: block; user-select: none; -webkit-user-drag: none; }
@@ -412,6 +414,8 @@
   /* 엽서: 기울어진 채 봉투 위 → 똑바로 서서 위로 → 봉투 안으로 쏙 */
   #seal.hover  #pc5 { transform: translate(640.7px, 40px) rotate(0deg) scale(.6188); transition-delay: .15s; }
   #seal.inside #pc5 { transform: translate(640.7px, 474px) rotate(0deg) scale(.6188); transition-delay: 0s; transition-duration: 1s; z-index: 3; }
+  #stage.p5 #seal:not(.inside) #pc5 { z-index: 5; }
+  #stage.sealing #seal.inside #pc5 { z-index: 3; }
 
   /* 봉투 봉하기 → 화면이 밝아지고 왼쪽 UI가 빠짐 */
   #bgSeal, #bgLink {
@@ -431,7 +435,7 @@
   /* ===== 링크 카드 ===== */
   #page6 { position: absolute; inset: 0; z-index: 11; pointer-events: none; }
   #linkcard {
-    position: absolute; left: 601.9px; top: 170.9px; width: 676.8px; height: 254.4px;
+    position: absolute; left: 601.9px; top: 120px; width: 676.8px; height: 300px;
     border-radius: 28px; background: rgba(238, 238, 232, .68);
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
     opacity: 0; transform: translateY(-26px); pointer-events: none;
@@ -455,6 +459,8 @@
     font: inherit; font-size: 15px; font-weight: 500;
   }
   #lc-copy:disabled { opacity: .55; cursor: default; }
+  #lc-restart { position: absolute; left: 42px; top: 220px; min-width: 165px; height: 42px; padding: 0 18px; border: 0; border-radius: 11px; background: rgba(58, 58, 58, .12); color: #333; cursor: pointer; font: inherit; font-size: 15px; font-weight: 500; }
+  #lc-restart:hover { background: rgba(58, 58, 58, .2); }
 
   /* ===== 받는 사람이 링크로 들어왔을 때 (임시 화면): 닫힌 봉투 → 눌러서 열면 엽서가 크게 나옴 ===== */
   #stage.viewer #scene, #stage.viewer #title { display: none; }
@@ -485,4 +491,19 @@
   @media (prefers-reduced-motion: reduce) {
     :root { --open-ms: 1ms; --rise-ms: 1ms; --rise-delay: 1ms; --zoom-ms: 1ms; --title-ms: 1ms; }
     #postcard, #stamp, #envgrp, .sw, #pal-btn, #pal-pop, #p2-guide, #p3-guide, #p4-guide, .next-btn, #to-name, #page2, #page3, #page4, #page5, #bg5, #bgSeal, #bgLink, #linkcard, #seal .sl, #sflap, #pc5, #env5grp, #p5-title, #p5-name, #p5-seal, #bgDark, body::after { transition-duration: 1ms !important; transition-delay: 0s !important; }
+  }
+
+  /* 엽서 글자를 별도 레이어로 올려서 drop-shadow/회전 중에도 글자가 빠지지 않게 */
+  #pc5-name, #pc5-msg { z-index: 2; will-change: transform; transform: translateZ(0); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+
+   /* ===== 왁스 봉인 (뚜껑 꼭지점) ===== */
+  #sl-wax { z-index: 7; }
+  #wax { position: absolute; left: 958.7px; top: 785px; width: 0; height: 0; opacity: 0; transform: scale(1.8); transform-origin: 0 0; }
+  #wax img { position: absolute; left: 0; top: 0; width: 220px; height: auto; transform: translate(-50%, -50%); display: block; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .35)); }
+  #seal.closed #wax { opacity: 1; transform: scale(1); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1) .8s, opacity .15s ease .8s; }   /* 뚜껑이 다 닫힌 뒤 쾅 찍힘 */
+  #seal.cracked #wax { animation: waxBreak .9s ease-in forwards; }                                                                        /* 받는 사람이 열려고 하면 깨져서 떨어짐 */
+  @keyframes waxBreak {
+    0%   { opacity: 1; transform: scale(1) rotate(0deg); }
+    25%  { opacity: 1; transform: scale(1.12) rotate(-5deg); }
+    100% { opacity: 0; transform: translateY(90px) rotate(26deg) scale(.85); }
   }
