@@ -23,6 +23,7 @@
   document.addEventListener('click', openEnvelope);
   document.body.style.cursor = 'pointer';
   stage.addEventListener('keydown', e => {
+    if (e.target !== stage) return;   // 입력창/편지 내용(contenteditable)에서 누른 스페이스·엔터는 건드리지 않음
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEnvelope(); }
   });
 
@@ -64,6 +65,9 @@
     fitName();
     input.blur();
     state.name = name;
+    state.message = '';
+    msg.textContent = '';
+    checkMsg();
     stage.classList.add('next');
     document.body.classList.add('next');
     document.getElementById('page2').setAttribute('aria-hidden', 'false');
@@ -77,39 +81,91 @@
   if (document.fonts) document.fonts.ready.then(() => { if (toName.textContent) fitName(); });
 
   // ===== 입력한 값(다음 페이지에서 이어서 쓸 수 있게 보관) =====
+  // 우표를 안 고르면 쓰는 기본 우표. 확장자를 모르는 경우를 위해 흔한 확장자를 차례로 찾아봄 (찾은 경로를 DEFAULT_STAMP에 저장)
+  const DEFAULT_STAMP_BASE = '../assets/postage_stamps';
+  let DEFAULT_STAMP = DEFAULT_STAMP_BASE + '.webp';
+  const defaultStampReady = (async () => {
+    for (const ext of ['.webp', '.png', '.jpg', '.jpeg', '.svg', '.avif', '.gif']) {
+      const src = DEFAULT_STAMP_BASE + ext;
+      const ok = await new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = src; });
+      if (ok) { DEFAULT_STAMP = src; return src; }
+    }
+    console.warn('기본 우표 이미지를 찾지 못했어요:', DEFAULT_STAMP_BASE + '.*');
+    return DEFAULT_STAMP;
+  })();
+  const DEFAULT_ENV_COLOR = '#eeeeea';                     // 봉투 기본 색 (처음 보이는 봉투 사진 색)
   const state = { name: '', message: '', stampFile: null, stampUrl: '', envColor: '', sender: '' };
 
   // ===== 1단계: 엽서 내용 (최대 4줄) → next 버튼 =====
   const msg   = document.getElementById('msg');
   const next2 = document.getElementById('p2-next');
-  let lastMsg = '';
+  function fitMessageToPostcard(text) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    const style = getComputedStyle(msg);
+    context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    const columnWidth = 380;
+    const maxLines = 8; // four ruled lines on each side
+    let lineCount = 1;
+    let lineWidth = 0;
 
-  function checkMsg() {
-    if (msg.scrollHeight > msg.clientHeight + 1) {      // 4줄을 넘으면 직전 내용으로 되돌림
-      const pos = Math.max(0, msg.selectionStart - (msg.value.length - lastMsg.length));
-      msg.value = lastMsg;
-      msg.setSelectionRange(pos, pos);
-    } else {
-      lastMsg = msg.value;
+    for (let i = 0; i < text.length;) {
+      const codePoint = text.codePointAt(i);
+      const character = String.fromCodePoint(codePoint);
+      const nextIndex = i + character.length;
+      if (character === '\n') {
+        lineCount += 1;
+        lineWidth = 0;
+        if (lineCount > maxLines) return text.slice(0, i);
+        i = nextIndex;
+        continue;
+      }
+      const width = context.measureText(character).width;
+      if (lineWidth > 0 && lineWidth + width > columnWidth) {
+        lineCount += 1;
+        lineWidth = 0;
+        if (lineCount > maxLines) return text.slice(0, i);
+      }
+      lineWidth += width;
+      i = nextIndex;
     }
-    state.message = msg.value;
-    next2.classList.toggle('show', msg.value.trim().length > 0);
+    return text;
   }
-  msg.addEventListener('input', e => {
-    state.message = msg.value;                           // 한글 조합 중에도 최신 내용을 보관
-    next2.classList.toggle('show', msg.value.trim().length > 0);
-    if (!e.isComposing) checkMsg();
-  });
+
+  function readMessage() {
+    return (msg.innerText || msg.textContent || '').replace(/\r\n?/g, '\n');
+  }
+  function checkMsg(event) {
+    if (event && event.isComposing) return;
+    const typed = readMessage();
+    const fitted = fitMessageToPostcard(typed);
+    if (fitted !== typed) {
+      msg.textContent = fitted;
+      const selection = window.getSelection();
+      if (selection) {
+        const range = document.createRange();
+        range.selectNodeContents(msg);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+    state.message = fitted;
+    next2.classList.toggle('show', fitted.trim().length > 0);
+    pc5Msg.textContent = fitted;
+  }
+  msg.addEventListener('input', checkMsg);
   msg.addEventListener('compositionend', checkMsg);
 
   // ===== next → 2단계: 우표 =====
   const page3 = document.getElementById('page3');
   next2.addEventListener('click', () => {
-    if (!msg.value.trim()) return;
-    state.message = msg.value;
+    if (!readMessage().trim()) return;
+    state.message = readMessage();
     msg.blur();
     stage.classList.add('stamp');
     page3.setAttribute('aria-hidden', 'false');
+    setTimeout(() => next3.classList.add('show'), 1500);   // 우표를 안 올려도 next 가능 (페이지 전환/안내 문구가 끝난 뒤 등장)
   });
 
   // ===== 2단계: 우표 이미지 업로드 → next 버튼 =====
@@ -120,7 +176,7 @@
 
   function setStampImage(file) {
     if (!file || !file.type.startsWith('image/')) return;
-    if (state.stampUrl) URL.revokeObjectURL(state.stampUrl);
+    if (state.stampFile && state.stampUrl) URL.revokeObjectURL(state.stampUrl);   // 업로드한 blob만 해제
     state.stampFile = file;
     state.stampUrl = URL.createObjectURL(file);
     stampPic.src = state.stampUrl;
@@ -139,9 +195,10 @@
   // ===== next → 3단계: 봉투 색깔 =====
   const page4 = document.getElementById('page4');
   next3.addEventListener('click', () => {
-    if (!state.stampFile) return;
+    if (!state.stampFile) state.stampUrl = DEFAULT_STAMP;   // 안 올렸으면 기본 우표
     stage.classList.add('env');
     page4.setAttribute('aria-hidden', 'false');
+    setTimeout(() => next4.classList.add('show'), 1500);    // 색을 안 골라도 next 가능 (페이지 전환/안내 문구가 끝난 뒤 등장)
   });
 
   // ===== 3단계: 봉투 색 고르기 =====
@@ -268,22 +325,41 @@
     while (el.scrollWidth > el.clientWidth && size > 14) { size -= 1; el.style.fontSize = size + 'px'; }
   }
 
+  const pc5El = document.getElementById('pc5');
+  function renderPreview() {                              // 오른쪽 엽서에 받는 사람 + 내용 그리기
+    pc5Name.textContent = state.name; fitEl(pc5Name);
+    pc5Msg.textContent = state.message;
+    pc5Msg.style.visibility = 'visible';
+    void pc5El.offsetWidth;                               // 강제 리플로우로 바로 다시 그리게
+  }
+
   next4.addEventListener('click', () => {
-    if (!state.envColor) return;
+    if (!state.envColor) state.envColor = DEFAULT_ENV_COLOR;   // 안 골랐으면 기본 색
     togglePalette(false);
-    pc5Name.textContent = state.name; fitEl(pc5Name);      // To. 이름
-    pc5Msg.textContent  = (state.message && state.message.trim()) ? state.message : msg.value;   // 쓴 내용
+    state.message = readMessage();
     pc5Photo.src = state.stampUrl;                         // 고른 우표 이미지
     stage.classList.add('p5');
     document.body.classList.add('p5');
+    renderPreview();
+    requestAnimationFrame(() => requestAnimationFrame(renderPreview));
+    setTimeout(renderPreview, 1700);                       // 봉투 등장 애니메이션이 끝난 뒤 한 번 더
     page5.setAttribute('aria-hidden', 'false');
     setSealColors(state.envColor);                         // 고른 색으로 봉투 칠하기
     senderInk(state.envColor);                             // 봉투 색에 어울리는 글자색
+    // Clear browser-restored values when starting a new postcard.
+    p5Name.value = '';
+    state.sender = '';
+    sender.textContent = '';
+    seal.classList.remove('show');
     setTimeout(() => p5Name.focus({ preventScroll: true }), 1600);
   });
 
   // 보내는 사람 이름을 쓰면 → 봉투 오른쪽 아래에 그대로 적히고 + '봉투 봉하기' 버튼이 나타남
   const sender = document.getElementById('env5-sender');
+  function setSender(name) {                              // 봉투 오른쪽 아래에 "From. 이름"으로 표시
+    sender.textContent = name.trim() ? 'From. ' + name.trim() : '';
+    fitEl(sender);
+  }
   function senderInk(hex) {                               // 밝은 봉투면 진하게, 어두운 봉투면 밝게
     const [r, g, b] = hexToRgb(hex).map(v => v / 255);
     const lum = .2126 * r + .7152 * g + .0722 * b;
@@ -293,10 +369,10 @@
     sender.style.setProperty('--sender-ink', `rgba(${c.join(',')}, .88)`);
   }
   p5Name.addEventListener('input', () => {
-    state.sender = p5Name.value.trim();
-    sender.textContent = state.sender;
-    fitEl(sender);
-    seal.classList.toggle('show', state.sender.length > 0);
+    state.sender = p5Name.value;
+    renderPreview();
+    setSender(state.sender);
+    seal.classList.toggle('show', state.sender.trim().length > 0);
   });
 
 
@@ -318,11 +394,14 @@
   const page6  = document.getElementById('page6');
   const lcUrl  = document.getElementById('lc-url');
   const lcCopy = document.getElementById('lc-copy');
+  const lcRestart = document.getElementById('lc-restart');
   let sealing = false;
 
   function sealEnvelope() {
-    if (sealing || !state.sender) return;
+    if (sealing || !state.sender.trim()) return;
     sealing = true;
+    pc5Msg.textContent = state.message;
+    pc5Msg.style.visibility = 'visible';
     p5Name.blur();
     stage.classList.add('sealing');                                   // 화면 밝아지고 왼쪽 글씨 퇴장
     buildLink().then(url => {                                         // 이 사이에 링크 생성
@@ -350,7 +429,7 @@
   };
 
   async function shrinkStamp() {                         // 우표 사진을 링크에 넣을 수 있게 작게 (우표 창과 같은 비율로 가운데 크롭)
-    if (!state.stampUrl) return new Uint8Array(0);
+    if (!state.stampFile || !state.stampUrl) return new Uint8Array(0);   // 기본 우표는 링크에 안 넣음
     const img = new Image(); img.src = state.stampUrl; await img.decode();
     const tries = [[200, .72], [180, .64], [160, .56], [140, .5], [120, .45]];
     let blob;
@@ -365,7 +444,7 @@
   }
 
   async function buildLink() {
-    const meta = new TextEncoder().encode(JSON.stringify({ v: 1, to: state.name, msg: state.message, from: state.sender, c: state.envColor }));
+    const meta = new TextEncoder().encode(JSON.stringify({ v: 1, to: state.name, msg: state.message, from: state.sender, c: state.envColor, ds: state.stampFile ? 0 : 1 }));
     const img = await shrinkStamp();
     const buf = new Uint8Array(4 + meta.length + img.length);
     new DataView(buf.buffer).setUint32(0, meta.length);
@@ -386,6 +465,7 @@
     lcCopy.textContent = '복사됨!'; setTimeout(() => { lcCopy.textContent = '링크 복사'; }, 1600);
   });
   lcUrl.addEventListener('focus', () => lcUrl.select());
+  lcRestart.addEventListener('click', () => location.assign(location.pathname + location.search));
 
   // ===== 받는 사람 화면(임시): 링크로 들어오면 닫힌 봉투 → 눌러서 열면 엽서가 크게 나옴 =====
   function startViewer(hash) {
@@ -396,7 +476,8 @@
     pc5Name.textContent = state.name; fitEl(pc5Name);
     pc5Msg.textContent = state.message;
     if (data.img.length) pc5Photo.src = URL.createObjectURL(new Blob([data.img], { type: 'image/jpeg' }));
-    sender.textContent = state.sender; fitEl(sender);
+    else defaultStampReady.then(src => { pc5Photo.src = src; });
+    setSender(state.sender);
     setSealColors(state.envColor); senderInk(state.envColor);
     stage.removeAttribute('role'); stage.removeAttribute('aria-label'); stage.removeAttribute('tabindex');
     document.body.style.cursor = '';
@@ -406,9 +487,57 @@
     let opened = false;
     stage.addEventListener('click', () => {
       if (opened) return; opened = true; stage.classList.add('opened');
-      sealEl.classList.remove('closed');                              // 뚜껑 열림
-      setTimeout(() => sealEl.classList.remove('inside'), 1000);      // 엽서가 위로 올라옴
-      setTimeout(() => stage.classList.add('reveal'), 2100);          // 엽서가 화면 가운데로 크게
+      sealEl.classList.add('cracked');                                // 왁스 봉인이 깨짐
+      setTimeout(() => sealEl.classList.remove('closed'), 800);       // 왁스가 깨진 뒤 뚜껑 열림
+      setTimeout(() => sealEl.classList.remove('inside'), 1800);      // 엽서가 위로 올라옴
+      setTimeout(() => stage.classList.add('reveal'), 2900);          // 엽서가 화면 가운데로 크게
     });
   }
-  if (/^#c=/.test(location.hash)) startViewer(location.hash);
+  // Only a valid postcard link opens the viewer; normal reload starts a fresh composition.
+  if (/^#c=[A-Za-z0-9_-]+$/.test(location.hash)) startViewer(location.hash);
+
+  // ===== 왁스 이미지 배경 지우기: 가장자리에서 시작해 배경색과 비슷한 픽셀을 투명하게 (이미 투명하면 건너뜀) =====
+  (function cleanWax() {
+    const img = document.querySelector('#wax img');
+    if (!img) return;
+    let done = false;
+    function run() {
+      if (done || !img.naturalWidth) return;
+      done = true;
+      try {
+        const w = img.naturalWidth, h = img.naturalHeight;
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        const ctx = cv.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0);
+        const im = ctx.getImageData(0, 0, w, h), d = im.data;      // file:// 로 열면 보안상 여기서 막힐 수 있음 → catch
+        const at = (x, y) => (y * w + x) * 4;
+        const corners = [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]];
+        if (corners.every(([x, y]) => d[at(x, y) + 3] < 10)) return;   // 이미 투명 배경
+        let br = 0, bg = 0, bb = 0;                                    // 배경색 = 네 모서리 평균
+        corners.forEach(([x, y]) => { const i = at(x, y); br += d[i]; bg += d[i + 1]; bb += d[i + 2]; });
+        br /= 4; bg /= 4; bb /= 4;
+        const T = 60, SOFT = 35;                                       // T 이내는 완전 투명, 그 바깥 SOFT까지는 가장자리를 부드럽게
+        const dist = i => Math.hypot(d[i] - br, d[i + 1] - bg, d[i + 2] - bb);
+        const seen = new Uint8Array(w * h), stack = [];
+        const push = (x, y) => { if (x < 0 || y < 0 || x >= w || y >= h) return; const k = y * w + x; if (seen[k]) return; seen[k] = 1; stack.push(k); };
+        for (let x = 0; x < w; x++) { push(x, 0); push(x, h - 1); }
+        for (let y = 0; y < h; y++) { push(0, y); push(w - 1, y); }
+        while (stack.length) {
+          const k = stack.pop(), i = k * 4, dd = dist(i);
+          if (dd < T) {
+            d[i + 3] = 0;
+            const x = k % w, y = (k / w) | 0;
+            push(x + 1, y); push(x - 1, y); push(x, y + 1); push(x, y - 1);
+          } else if (dd < T + SOFT) {
+            d[i + 3] = Math.round(255 * (dd - T) / SOFT);              // 경계는 부드럽게
+          }
+        }
+        ctx.putImageData(im, 0, 0);
+        img.src = cv.toDataURL('image/png');
+      } catch (err) {
+        img.style.mixBlendMode = 'multiply';                          // 읽기가 막히면 흰 배경만이라도 안 보이게
+        console.warn('왁스 배경 자동 제거 실패(로컬 file:// 이면 서버로 열어보세요):', err);
+      }
+    }
+    if (img.complete) run(); else img.addEventListener('load', run, { once: true });
+  })();
